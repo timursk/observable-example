@@ -1,6 +1,5 @@
-import { Controller, ListItem, Subscriber } from "../../types/types";
+import { Controller, Events, HeroesEvent, ListItem, Subscriber } from "../../types/types";
 import { Controllers } from "../../utils/constants";
-import StatisticsView from '../../views/Statistics/Statistics.html';
 
 const CLASS_NAME = 'statistics__count'
 
@@ -18,7 +17,7 @@ class StatisticsController implements Controller, Subscriber {
         if (!countElement) {
             return;
         }
-        countElement.innerHTML = `${this.count.toString()} superheroes`;
+        countElement.innerHTML = `${this.count.toString()} Marvel superheroes`;
     }
 
     render() {
@@ -26,14 +25,22 @@ class StatisticsController implements Controller, Subscriber {
             return;
         }
         const container = document.createElement('div');
-        container.innerHTML = StatisticsView;
+        container.innerHTML = `<div class="statistics__root">
+        <div class="statistics__count"></div>
+    </div>`;
         this.parentElement.append(container);
         this.updateCount();
     }
 
-    update(context: ListItem[]) {
-        this.count = context && context.length || 0;
-        this.updateCount();
+    update(event: HeroesEvent) {
+        const {
+            type,
+            payload
+        } = event;
+        if (type === Events.UPDATE_MARVEL) {
+            this.count = payload && payload.length || 0;
+            this.updateCount();
+        }
     }
 }
 

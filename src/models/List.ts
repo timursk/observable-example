@@ -1,11 +1,17 @@
-import { ListItem, Publisher, Subscriber } from "../types/types";
+import { ActionTypes, Events, HeroesEvent, ListItem, Publisher, Subscriber } from "../types/types";
+import { DC_SUPERHEROES, MARVEL_SUPERHEROES } from "../utils/constants";
 
 class List implements Publisher {
-    list: Array<ListItem>;
+    private marvelList: Array<ListItem>;
+    private dcList: Array<ListItem>;
     subscribers: Subscriber[];
+    events: {
+        [Events.UPDATE_DC]: []
+    }
     constructor() {
         this.subscribers = [];
-        this.list = [];
+        this.marvelList = [];
+        this.dcList = [];
     }
     subscribe(subscriber: Subscriber) {
         this.subscribers.push(subscriber)
@@ -17,15 +23,71 @@ class List implements Publisher {
             ...this.subscribers.slice(subscrIndex + 1)
         ];
     };
-    notifySubscribers() {
-        this.subscribers.forEach((subscr) => subscr.update(this.list));
+
+    notifySubscribers(event: HeroesEvent) {
+        this.subscribers.forEach((subscr) => subscr.update(event));
     };
 
     addItem(item: string) {
-        this.list.push({
-            name: item
+        const event = this.sortItemAndGetEvent(item);
+        this.notifySubscribers(event);
+    }
+
+    private sortItemAndGetEvent(item: string): HeroesEvent {
+        if (MARVEL_SUPERHEROES.find((name) => name.toLowerCase() === item.toLowerCase())) {
+            this.marvelList.push({
+                name: item
+            });
+            return {
+            type: Events.UPDATE_MARVEL,
+            payload: this.marvelList
+        };
+        } else if (DC_SUPERHEROES.find((name) => name.toLowerCase() === item.toLowerCase())) {
+            this.dcList.push({
+                name: item
+            });
+            return {
+                type: Events.UPDATE_DC,
+                payload: this.dcList
+            };
+        }
+    }
+
+    addItems(items: Array<string>) {
+        if (!Array.isArray(items) || !items.length) {
+            return;
+        }
+        items.forEach((item) => this.sortItemAndGetEvent(item));
+        this.notifySubscribers({
+            type: Events.UPDATE_DC,
+            payload: this.dcList
         });
-        this.notifySubscribers();
+        this.notifySubscribers({
+            type: Events.UPDATE_MARVEL,
+            payload: this.marvelList
+        });
+    }
+
+    deleteAllItems(type: ActionTypes) {
+        switch (type) {
+            case ActionTypes.DC: {
+                this.dcList = [];
+                this.notifySubscribers({
+                    type: Events.UPDATE_DC,
+                    payload: this.dcList
+                });
+                return;
+            }
+            case ActionTypes.MARVEL: {
+                this.marvelList = [];
+                this.notifySubscribers({
+                    type: Events.UPDATE_MARVEL,
+                    payload: this.marvelList
+                });
+                return;
+            }
+            default: return;
+        }
     }
 }
 

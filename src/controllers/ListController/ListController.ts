@@ -1,6 +1,5 @@
 import { parseJsonSourceFileConfigFileContent } from "typescript";
-import { Controller, ListItem, Subscriber } from "../../types/types";
-import ListView from '../../views/ListView/ListView.html';
+import { Controller, Events, HeroesEvent, ListItem, Subscriber } from "../../types/types";
 
 const CLASS_NAME = 'list-view';
 
@@ -12,9 +11,11 @@ class ListController implements Controller, Subscriber {
         this.parentElement = element;
     }
 
-    update(context: ListItem[]) {
-        this.items = context;
-        this.render();
+    update(event: HeroesEvent) {
+        if (event.type === Events.UPDATE_MARVEL) {
+            this.items = event.payload;
+            this.render();
+        }
     };
 
     getItem(item: ListItem) {
